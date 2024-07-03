@@ -74,10 +74,51 @@ def get_cafe_at_location():
 
 # HTTP POST - Create Record
 
+@app.route("/add", methods=["POST"])
+def add_cafe():
+    with app.app_context():
+        new_cafe = Cafe(
+            name = request.form.get("name"), 
+            map_url = request.form.get("map_url"), 
+            img_url = request.form.get("img_url"), 
+            location = request.form.get("location"), 
+            seats = request.form.get("seats"),
+            has_toilet = bool(request.form.get("has_toilet")), 
+            has_wifi = bool(request.form.get("has_wifi")),
+            has_sockets = bool(request.form.get("has_sockets")), 
+            can_take_calls = bool(request.form.get("can_take_calls")), 
+            coffee_price = request.form.get("coffee_price"), 
+        )
+        print(new_cafe)
+        db.session.add(new_cafe)
+        
+        db.session.commit()
+        
+        return jsonify(response={
+            "success":"successfully added a new Cafe"
+        })
+    
 # HTTP PUT/PATCH - Update Record
-
+@app.route("/update_price/<cafe_id>", methods=["PATCH"])
+def update_price(cafe_id):
+    element_to_update = db.get_or_404(Cafe,cafe_id)
+    if element_to_update:
+        element_to_update.coffee_price = request.args.get('coffee_price')
+        db.session.commit()
+        return jsonify(response={"success":"successfully updated coffee price"}), 200
+    else:
+        return jsonify( error = {"Not Found: Sorry, a cafe with that id was not found in our database"}), 404
 # HTTP DELETE - Delete Record
-
+API_KEY = "TopSecretAPIKey"
+@app.route("/report_closed/<cafe_id>",methods=["DELETE"])
+def delete_cafe(cafe_id):
+    element_to_delete = db.get_or_404(Cafe, cafe_id)
+    if request.args.get('api_key') == API_KEY:
+        db.session.delete(element_to_delete)
+        db.session.commit()
+        return jsonify(response={"success":"successfully deletede the Cafe reported closed"}), 200
+    else:
+        return jsonify( error = {"Not Found": "Sorry, you are not allowed to perform this action. Make sure you have the correct api_key"}), 403
 
 if __name__ == '__main__':
     app.run(debug=True)
